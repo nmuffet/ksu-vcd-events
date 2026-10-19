@@ -1,0 +1,86 @@
+{
+  "entities": {
+    "Event": {
+      "title": "Community Event",
+      "description": "A community calendar event submission",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique event identifier",
+          "maxLength": 100
+        },
+        "title": {
+          "type": "string",
+          "description": "Event headline title",
+          "maxLength": 140
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of event in YYYY-MM-DD format",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of event",
+          "maxLength": 80
+        },
+        "location": {
+          "type": "string",
+          "description": "Physical venue or meeting location",
+          "maxLength": 250
+        },
+        "description": {
+          "type": "string",
+          "description": "Full event description",
+          "maxLength": 3000
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "Organizer contact email address",
+          "maxLength": 120
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "rejected"],
+          "description": "Moderation status"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Submission ISO timestamp"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "description": "Moderator review ISO timestamp"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "description": "Moderator name or username",
+          "maxLength": 100
+        },
+        "notes": {
+          "type": "string",
+          "description": "Internal moderation notes",
+          "maxLength": 1000
+        },
+        "suggestedEditForId": {
+          "type": "string",
+          "description": "Original event ID if this is an edit suggestion",
+          "maxLength": 100
+        },
+        "suggestedEditTitle": {
+          "type": "string",
+          "description": "Original event title if this is an edit suggestion",
+          "maxLength": 140
+        }
+      },
+      "required": ["id", "title", "date", "time", "location", "description", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/events/{eventId}": {
+      "schema": "Event",
+      "description": "Collection of community events"
+    }
+  }
+}

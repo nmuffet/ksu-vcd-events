@@ -1,0 +1,6 @@
+{
+  "name": "Community Event Calendar",
+  "description": "Find upcoming KSU VCD events and submit your own.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
