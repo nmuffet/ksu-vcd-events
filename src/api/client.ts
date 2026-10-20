@@ -1,6 +1,5 @@
 import { CommunityEvent, EventSubmissionInput } from '../types';
 import { firestoreApi } from '../lib/firebase';
-import { INITIAL_EVENTS } from '../data/sampleEvents';
 
 const ADMIN_PASSWORD_KEY = 'community_events_admin_pwd';
 export const DEFAULT_ADMIN_PASSWORD = '';
@@ -14,9 +13,9 @@ export const api = {
         return events;
       }
     } catch (err) {
-      console.warn('Firestore getApprovedEvents failed, fallback to local', err);
+      console.warn('Firestore getApprovedEvents failed', err);
     }
-    return [...INITIAL_EVENTS].filter((e) => e.status === 'approved');
+    return [];
   },
 
   // Submit new event (anonymous community submission directly to Firestore)
@@ -122,10 +121,7 @@ export const api = {
     return true;
   },
 
-  // Reset sample demo data
-  async resetDemoData(_password?: string): Promise<void> {
-    await firestoreApi.resetDemoData();
-  },
+
 
   // Newsletter API preview generation
   generateNewsletterMarkdown(events: CommunityEvent[]): string {

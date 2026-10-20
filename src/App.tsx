@@ -117,10 +117,7 @@ export default function App() {
     await loadData();
   };
 
-  const handleResetDemoData = async () => {
-    await api.resetDemoData(adminPassword);
-    await loadData();
-  };
+
 
   const scrollToCalendar = () => {
     setActiveView('calendar');
@@ -175,7 +172,7 @@ export default function App() {
             onOpenEditModal={(evt) => setEditingEvent(evt)}
             onDeleteEvent={handleDelete}
             onUnpublish={handleUnpublish}
-            onResetDemoData={handleResetDemoData}
+
             openAdminDocs={() => setIsAdminDocsModalOpen(true)}
           />
         )}

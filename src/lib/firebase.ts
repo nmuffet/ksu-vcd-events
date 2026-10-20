@@ -21,13 +21,24 @@ import {
   getDocFromServer,
   writeBatch,
 } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import configFile from '../../firebase-applet-config.json';
 import { CommunityEvent, EventSubmissionInput } from '../types';
-import { INITIAL_EVENTS } from '../data/sampleEvents';
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (configFile as any).apiKey,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (configFile as any).authDomain,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (configFile as any).projectId,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (configFile as any).storageBucket,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (configFile as any).messagingSenderId,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || (configFile as any).appId,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || (configFile as any).measurementId,
+};
+
+const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (configFile as any).firestoreDatabaseId;
 
 // Initialize Firebase SDK
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -137,20 +148,7 @@ export const firestoreApi = {
 
   // Seed initial events into Firestore if none exist
   async seedInitialDataIfEmpty(): Promise<void> {
-    try {
-      const q = query(collection(db, 'events'), where('status', '==', 'approved'));
-      const snapshot = await getDocs(q);
-      if (snapshot.size > 0) return;
-
-      const batch = writeBatch(db);
-      for (const evt of INITIAL_EVENTS) {
-        const ref = doc(db, 'events', evt.id);
-        batch.set(ref, evt);
-      }
-      await batch.commit();
-    } catch (err) {
-      console.warn('Initial seed skipped or not permitted:', err);
-    }
+    // No demo data
   },
 
   // Submit new event (anonymous community submission directly to Firestore)
@@ -302,21 +300,8 @@ export const firestoreApi = {
     }
   },
 
-  // Admin: Reset / Reload sample data
+  // Admin: Reset / Reload sample data (removed)
   async resetDemoData(): Promise<void> {
-    try {
-      const snapshot = await getDocs(collection(db, 'events'));
-      const batch = writeBatch(db);
-      snapshot.forEach((docSnap) => {
-        batch.delete(docSnap.ref);
-      });
-      for (const evt of INITIAL_EVENTS) {
-        const ref = doc(db, 'events', evt.id);
-        batch.set(ref, evt);
-      }
-      await batch.commit();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'events');
-    }
+    // Demo data and reset removed
   },
 };

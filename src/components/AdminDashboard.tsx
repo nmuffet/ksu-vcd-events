@@ -34,7 +34,7 @@ interface AdminDashboardProps {
   onOpenEditModal: (event: CommunityEvent) => void;
   onDeleteEvent: (id: string) => Promise<void>;
   onUnpublish: (id: string) => Promise<void>;
-  onResetDemoData: () => Promise<void>;
+
   openAdminDocs: () => void;
 }
 
@@ -49,7 +49,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenEditModal,
   onDeleteEvent,
   onUnpublish,
-  onResetDemoData,
+
   openAdminDocs,
 }) => {
   const [passwordInput, setPasswordInput] = useState('');
@@ -248,14 +248,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <BookOpen className="w-3.5 h-3.5" />
             <span>Admin Docs</span>
           </button>
-          <button
-            onClick={onResetDemoData}
-            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-            title="Reset to 8 approved and 2 pending demo events"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Demo Data</span>
-          </button>
+
           <button
             onClick={onLogout}
             className="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 border border-rose-800/40"
@@ -317,15 +310,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
               <h3 className="text-base font-bold text-stone-900 mb-1">Queue is Clear!</h3>
               <p className="text-stone-500 text-xs sm:text-sm max-w-sm mx-auto">
-                No pending event submissions awaiting review. You can reset demo data to reload sample pending submissions.
+                No pending event submissions awaiting review.
               </p>
-              <button
-                onClick={onResetDemoData}
-                className="mt-4 px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Load Sample Pending Events</span>
-              </button>
             </div>
           ) : (
             pendingEvents.map((evt) => (

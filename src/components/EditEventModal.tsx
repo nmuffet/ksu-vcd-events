@@ -18,6 +18,7 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [isAllDay, setIsAllDay] = useState(false);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -29,7 +30,9 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     if (event) {
       setTitle(event.title);
       setDate(event.date);
-      setTime(event.time);
+      const isAllDayTime = event.time.toLowerCase() === 'all day' || event.time.toLowerCase() === 'all-day';
+      setIsAllDay(isAllDayTime);
+      setTime(isAllDayTime ? 'All Day' : event.time);
       setLocation(event.location);
       setDescription(event.description);
       setContactEmail(event.contactEmail || '');
@@ -46,7 +49,7 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
       await onSave(event.id, {
         title: title.trim(),
         date,
-        time: time.trim(),
+        time: isAllDay ? 'All Day' : time.trim(),
         location: location.trim(),
         description: description.trim(),
         contactEmail: contactEmail.trim() || undefined,
@@ -107,15 +110,37 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Time
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-stone-700">
+                  Time
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-stone-600 hover:text-stone-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={isAllDay}
+                    onChange={(e) => {
+                      setIsAllDay(e.target.checked);
+                      if (e.target.checked) {
+                        setTime('All Day');
+                      } else {
+                        setTime('');
+                      }
+                    }}
+                    className="rounded border-stone-300 text-stone-900 focus:ring-stone-900 w-3.5 h-3.5"
+                  />
+                  All day
+                </label>
+              </div>
               <input
                 type="text"
-                required
+                required={!isAllDay}
+                disabled={isAllDay}
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900"
+                placeholder="e.g., 6:30 PM – 8:30 PM"
+                className={`w-full px-3.5 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors ${
+                  isAllDay ? 'bg-stone-100 text-stone-400 cursor-not-allowed border-stone-200' : 'bg-white border-stone-300'
+                }`}
               />
             </div>
           </div>
@@ -184,7 +209,7 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
               type="text"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="e.g. Verified with community garden coordinator"
+              placeholder=""
               className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900"
             />
           </div>
