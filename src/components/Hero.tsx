@@ -13,7 +13,7 @@ export const Hero: React.FC<HeroProps> = ({
   scrollToEvents,
 }) => {
   return (
-    <section className="bg-white border-b border-stone-200 pt-12 pb-14 sm:pt-16 sm:pb-20">
+    <section className="bg-white border-b border-stone-200 pt-12 pb-0 sm:pt-16 sm:pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div>
           {/* Institutional Kicker */}
@@ -35,7 +35,7 @@ export const Hero: React.FC<HeroProps> = ({
           </p>
 
           {/* Action Row */}
-          <div className="flex flex-wrap items-center gap-3.5 mb-10">
+          <div className="flex flex-wrap items-center gap-3.5 mb-6 sm:mb-10">
             <button
               type="button"
               onClick={openSubmitModal}

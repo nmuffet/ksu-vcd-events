@@ -21,24 +21,26 @@ import {
   getDocFromServer,
   writeBatch,
 } from 'firebase/firestore';
-import configFile from '../../firebase-applet-config.json';
 import { CommunityEvent, EventSubmissionInput } from '../types';
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (configFile as any).apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (configFile as any).authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (configFile as any).projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (configFile as any).storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (configFile as any).messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || (configFile as any).appId,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || (configFile as any).measurementId,
-};
+// Safely resolve local config file if present in dev environment, otherwise rely on .env
+const configModules: Record<string, any> = import.meta.glob('../../firebase-applet-config.json', { eager: true });
+const envConfig = configModules['../../firebase-applet-config.json']?.default || {};
 
-const firestoreDatabaseId = import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (configFile as any).firestoreDatabaseId;
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (envConfig as any).apiKey || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || (envConfig as any).authDomain || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || (envConfig as any).projectId || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || (envConfig as any).storageBucket || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || (envConfig as any).messagingSenderId || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || (envConfig as any).appId || '',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || (envConfig as any).measurementId || '',
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_FIRESTORE_DATABASE_ID || (envConfig as any).firestoreDatabaseId || ''
+};
 
 // Initialize Firebase SDK
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firestoreDatabaseId);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId || undefined);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -52,6 +54,15 @@ export const isAuthorizedAdminEmail = (email?: string | null): boolean => {
 };
 
 export const ADMIN_EMAIL = ADMIN_EMAILS[0];
+
+export async function loginWithGoogle(): Promise<User | null> {
+  const result = await signInWithPopup(auth, googleProvider);
+  return result.user;
+}
+
+export async function logoutUser(): Promise<void> {
+  await signOut(auth);
+}
 
 // Connection Test
 async function testConnection() {
@@ -159,6 +170,9 @@ export const firestoreApi = {
       title: input.title.trim(),
       date: input.date.trim(),
       time: input.time.trim(),
+      startTime: input.startTime?.trim() || undefined,
+      endTime: input.endTime?.trim() || undefined,
+      isAllDay: input.isAllDay,
       location: input.location.trim(),
       description: input.description.trim(),
       contactEmail: input.contactEmail?.trim() || undefined,
@@ -180,6 +194,9 @@ export const firestoreApi = {
       status: newEvent.status,
       createdAt: newEvent.createdAt,
     };
+    if (newEvent.startTime) payload.startTime = newEvent.startTime;
+    if (newEvent.endTime) payload.endTime = newEvent.endTime;
+    if (newEvent.isAllDay !== undefined) payload.isAllDay = newEvent.isAllDay;
     if (newEvent.contactEmail) payload.contactEmail = newEvent.contactEmail;
     if (newEvent.suggestedEditForId) payload.suggestedEditForId = newEvent.suggestedEditForId;
     if (newEvent.suggestedEditTitle) payload.suggestedEditTitle = newEvent.suggestedEditTitle;

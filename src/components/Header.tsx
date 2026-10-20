@@ -33,13 +33,13 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Zone 2: Primary Action Button */}
         <div className="flex items-center gap-2.5 shrink-0">
-          <button
-            onClick={openSubmitModal}
-            className="px-4 py-2 text-xs sm:text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 transition-colors shadow-xs flex items-center gap-1.5 whitespace-nowrap shrink-0"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>Submit Event</span>
-          </button>
+            <button
+              onClick={openSubmitModal}
+              className="px-5 py-3 sm:px-4 sm:py-2 text-sm sm:text-sm font-medium text-white bg-stone-900 rounded-lg hover:bg-stone-800 transition-colors shadow-xs flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            >
+              <PlusCircle className="w-5 h-5 sm:w-4 sm:h-4" />
+              <span>Submit Event</span>
+            </button>
         </div>
       </div>
     </header>

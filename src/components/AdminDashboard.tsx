@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { CommunityEvent } from '../types';
 import { formatDateLong, formatRelativeTime } from '../utils/dateUtils';
-import { auth, googleProvider, isAuthorizedAdminEmail } from '../lib/firebase';
-import { signInWithPopup } from 'firebase/auth';
 import {
   ShieldCheck,
   CheckCircle,
@@ -11,7 +9,6 @@ import {
   Trash2,
   Lock,
   LogOut,
-  RefreshCw,
   Mail,
   Calendar,
   MapPin,
@@ -34,7 +31,6 @@ interface AdminDashboardProps {
   onOpenEditModal: (event: CommunityEvent) => void;
   onDeleteEvent: (id: string) => Promise<void>;
   onUnpublish: (id: string) => Promise<void>;
-
   openAdminDocs: () => void;
 }
 
@@ -49,7 +45,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenEditModal,
   onDeleteEvent,
   onUnpublish,
-
   openAdminDocs,
 }) => {
   const [passwordInput, setPasswordInput] = useState('');
@@ -104,52 +99,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsLoggingIn(true);
-    setLoginError('');
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const email = result.user?.email;
-      if (isAuthorizedAdminEmail(email)) {
-        // Logged in as authorized admin
-      } else {
-        setLoginError(`Signed in as ${result.user?.email}, but this account is not authorized as an administrator.`);
-      }
-    } catch (err: any) {
-      setLoginError(err.message || 'Google sign-in failed. Please try again.');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  // If not authenticated, show password challenge
+  // If not authenticated, show login options
   if (!isAdminLoggedIn) {
     return (
       <section className="py-12 px-4 max-w-md mx-auto">
         <div className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-8 shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-stone-900 text-white flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-6 h-6" />
+            <ShieldCheck className="w-6 h-6 text-emerald-400" />
           </div>
 
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold text-stone-900">Admin Moderation Portal</h2>
             <p className="text-stone-500 text-xs sm:text-sm mt-1">
-              Curate pending community event submissions
+              Curate and publish community event submissions
             </p>
           </div>
 
           {loginError && (
-            <div className="p-3 mb-4 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg flex items-start gap-2">
+            <div className="p-3 mb-5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{loginError}</span>
             </div>
           )}
 
-          {/* Password Login (Primary) */}
+          {/* Password Login */}
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Admin Password
+              <label className="block text-xs font-semibold text-stone-700 mb-1.5">
+                Moderator Passphrase
               </label>
               <div className="relative">
                 <input
@@ -157,13 +134,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="Enter admin password"
+                  className="w-full px-3.5 py-2.5 text-sm bg-stone-50 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 pr-10 font-mono"
                   autoFocus
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-600"
+                  className="absolute right-3 top-3 text-stone-400 hover:text-stone-600 cursor-pointer"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -174,50 +151,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button
               type="submit"
               disabled={isLoggingIn || !passwordInput.trim()}
-              className="w-full py-2.5 px-4 bg-stone-900 text-white font-medium text-sm rounded-lg hover:bg-stone-800 transition-colors disabled:opacity-50 shadow-xs flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-stone-900 text-white font-medium text-sm rounded-lg hover:bg-stone-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span>{isLoggingIn ? 'Verifying...' : 'Unlock Moderation Dashboard'}</span>
+              <Lock className="w-4 h-4" />
+              <span>{isLoggingIn ? 'Verifying...' : 'Unlock Moderation Portal'}</span>
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-stone-200"></div>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-stone-400 font-medium">Or sign in with Google</span>
-            </div>
-          </div>
-
-          {/* Google Sign In for Authorized Admins */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={isLoggingIn}
-            className="w-full py-2.5 px-4 bg-white text-stone-800 border border-stone-300 font-medium text-sm rounded-lg hover:bg-stone-50 transition-colors shadow-xs flex items-center justify-center gap-2.5 disabled:opacity-50"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-              />
-            </svg>
-            <span>Sign In with Google</span>
-          </button>
         </div>
       </section>
     );
@@ -230,7 +169,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div>
           <div className="flex items-center gap-2 text-xs text-stone-400 font-medium mb-1">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Admin Active · Nick</span>
+            <span>Moderator Access · Cloud Synchronized</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
             Event Moderation Dashboard
@@ -243,7 +182,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={openAdminDocs}
-            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 cursor-pointer"
           >
             <BookOpen className="w-3.5 h-3.5" />
             <span>Admin Docs</span>
@@ -251,7 +190,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <button
             onClick={onLogout}
-            className="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 border border-rose-800/40"
+            className="px-3 py-1.5 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-medium rounded-lg transition-colors inline-flex items-center gap-1.5 border border-rose-800/40 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>

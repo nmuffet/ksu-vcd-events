@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CommunityEvent } from '../types';
 import { X, Save, CheckCircle } from 'lucide-react';
+import { TimeInputPicker } from './TimeInputPicker';
+import { parseTimeTo24, buildFormattedTimeString } from '../utils/dateUtils';
 
 interface EditEventModalProps {
   isOpen: boolean;
@@ -17,8 +19,10 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
+  const [timeError, setTimeError] = useState('');
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -30,9 +34,14 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     if (event) {
       setTitle(event.title);
       setDate(event.date);
-      const isAllDayTime = event.time.toLowerCase() === 'all day' || event.time.toLowerCase() === 'all-day';
-      setIsAllDay(isAllDayTime);
-      setTime(isAllDayTime ? 'All Day' : event.time);
+      
+      const parsed = parseTimeTo24(event.time);
+      const allDay = event.isAllDay ?? parsed.isAllDay;
+      setIsAllDay(allDay);
+      setStartTime(event.startTime || parsed.startTime || '');
+      setEndTime(event.endTime || parsed.endTime || '');
+      setTimeError('');
+
       setLocation(event.location);
       setDescription(event.description);
       setContactEmail(event.contactEmail || '');
@@ -44,12 +53,26 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!event) return;
+
+    if (!isAllDay && !startTime) {
+      setTimeError('Please select a start time (or check All-day event)');
+      return;
+    }
+    if (!isAllDay && startTime && endTime && endTime < startTime) {
+      setTimeError('End time cannot be earlier than start time');
+      return;
+    }
+
     setIsSaving(true);
     try {
+      const formattedTime = isAllDay ? 'All Day' : buildFormattedTimeString(startTime, endTime);
       await onSave(event.id, {
         title: title.trim(),
         date,
-        time: isAllDay ? 'All Day' : time.trim(),
+        time: formattedTime,
+        startTime: isAllDay ? undefined : startTime,
+        endTime: isAllDay ? undefined : endTime,
+        isAllDay,
         location: location.trim(),
         description: description.trim(),
         contactEmail: contactEmail.trim() || undefined,
@@ -96,54 +119,38 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-stone-700 mb-1">
-                Date
-              </label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900"
-              />
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-stone-700">
-                  Time
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-stone-600 hover:text-stone-900 select-none">
-                  <input
-                    type="checkbox"
-                    checked={isAllDay}
-                    onChange={(e) => {
-                      setIsAllDay(e.target.checked);
-                      if (e.target.checked) {
-                        setTime('All Day');
-                      } else {
-                        setTime('');
-                      }
-                    }}
-                    className="rounded border-stone-300 text-stone-900 focus:ring-stone-900 w-3.5 h-3.5"
-                  />
-                  All day
-                </label>
-              </div>
-              <input
-                type="text"
-                required={!isAllDay}
-                disabled={isAllDay}
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                placeholder="e.g., 6:30 PM – 8:30 PM"
-                className={`w-full px-3.5 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors ${
-                  isAllDay ? 'bg-stone-100 text-stone-400 cursor-not-allowed border-stone-200' : 'bg-white border-stone-300'
-                }`}
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold text-stone-700 mb-1">
+              Date
+            </label>
+            <input
+              type="date"
+              required
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-3.5 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900"
+            />
           </div>
+
+          <TimeInputPicker
+            startTime={startTime}
+            endTime={endTime}
+            isAllDay={isAllDay}
+            onStartTimeChange={(val) => {
+              setStartTime(val);
+              setTimeError('');
+            }}
+            onEndTimeChange={(val) => {
+              setEndTime(val);
+              setTimeError('');
+            }}
+            onIsAllDayChange={(val) => {
+              setIsAllDay(val);
+              setTimeError('');
+            }}
+            error={timeError}
+            required={true}
+          />
 
           <div>
             <label className="block text-xs font-semibold text-stone-700 mb-1">

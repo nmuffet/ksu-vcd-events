@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CommunityEvent, EventSubmissionInput } from '../types';
 import { X, CheckCircle2 } from 'lucide-react';
+import { TimeInputPicker } from './TimeInputPicker';
+import { parseTimeTo24, buildFormattedTimeString } from '../utils/dateUtils';
 
 interface SuggestEditModalProps {
   isOpen: boolean;
@@ -18,7 +20,9 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [isAllDay, setIsAllDay] = useState(false);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -34,7 +38,13 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
     if (event) {
       setTitle(event.title);
       setDate(event.date);
-      setTime(event.time);
+
+      const parsed = parseTimeTo24(event.time);
+      const allDay = event.isAllDay ?? parsed.isAllDay;
+      setIsAllDay(allDay);
+      setStartTime(event.startTime || parsed.startTime || '');
+      setEndTime(event.endTime || parsed.endTime || '');
+
       setLocation(event.location);
       setDescription(event.description);
       setContactEmail(event.contactEmail || '');
@@ -54,8 +64,10 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
     if (!date) {
       errs.date = 'Date is required';
     }
-    if (!time.trim()) {
-      errs.time = 'Time is required';
+    if (!isAllDay && !startTime) {
+      errs.time = 'Please select a start time (or check All-day event)';
+    } else if (!isAllDay && startTime && endTime && endTime < startTime) {
+      errs.time = 'End time cannot be earlier than start time';
     }
     if (!location.trim()) {
       errs.location = 'Location is required';
@@ -73,10 +85,14 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const formattedTime = isAllDay ? 'All Day' : buildFormattedTimeString(startTime, endTime);
       const created = await onSubmitSuggestion({
         title: title.trim(),
         date,
-        time: time.trim(),
+        time: formattedTime,
+        startTime: isAllDay ? undefined : startTime,
+        endTime: isAllDay ? undefined : endTime,
+        isAllDay,
         location: location.trim(),
         description: description.trim(),
         contactEmail: contactEmail.trim() || undefined,
@@ -184,39 +200,42 @@ export const SuggestEditModal: React.FC<SuggestEditModalProps> = ({
                 {errors.title && <p className="text-rose-600 text-xs mt-1">{errors.title}</p>}
               </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 ${
-                      errors.date ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300'
-                    }`}
-                  />
-                  {errors.date && <p className="text-rose-600 text-xs mt-1">{errors.date}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Time <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="e.g., 6:00 PM – 8:00 PM"
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 ${
-                      errors.time ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300'
-                    }`}
-                  />
-                  {errors.time && <p className="text-rose-600 text-xs mt-1">{errors.time}</p>}
-                </div>
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  Date <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={`w-full px-3.5 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 ${
+                    errors.date ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300'
+                  }`}
+                />
+                {errors.date && <p className="text-rose-600 text-xs mt-1">{errors.date}</p>}
               </div>
+
+              {/* Structured Time Picker */}
+              <TimeInputPicker
+                startTime={startTime}
+                endTime={endTime}
+                isAllDay={isAllDay}
+                onStartTimeChange={(val) => {
+                  setStartTime(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                onEndTimeChange={(val) => {
+                  setEndTime(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                onIsAllDayChange={(val) => {
+                  setIsAllDay(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                error={errors.time}
+                required={true}
+              />
 
               {/* Location */}
               <div>

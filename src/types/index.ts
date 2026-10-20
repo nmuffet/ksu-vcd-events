@@ -2,7 +2,10 @@ export interface CommunityEvent {
   id: string;
   title: string;
   date: string; // YYYY-MM-DD
-  time: string; // e.g., "10:00 AM - 1:00 PM"
+  time: string; // e.g., "10:00 AM – 1:00 PM" or "All Day"
+  startTime?: string; // e.g., "10:00" (24-hour HH:mm)
+  endTime?: string;   // e.g., "13:00" (24-hour HH:mm)
+  isAllDay?: boolean;
   location: string;
   description: string;
   contactEmail?: string;
@@ -19,6 +22,9 @@ export interface EventSubmissionInput {
   title: string;
   date: string;
   time: string;
+  startTime?: string;
+  endTime?: string;
+  isAllDay?: boolean;
   location: string;
   description: string;
   contactEmail?: string;

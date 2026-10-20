@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { EventSubmissionInput, CommunityEvent } from '../types';
 import { X, CheckCircle2, ShieldAlert, Sparkles } from 'lucide-react';
+import { TimeInputPicker } from './TimeInputPicker';
+import { buildFormattedTimeString } from '../utils/dateUtils';
 
 interface SubmitEventModalProps {
   isOpen: boolean;
@@ -16,7 +18,8 @@ export const SubmitEventModal: React.FC<SubmitEventModalProps> = ({
 }) => {
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
@@ -40,8 +43,10 @@ export const SubmitEventModal: React.FC<SubmitEventModalProps> = ({
       errs.date = 'Date is required';
     }
 
-    if (!isAllDay && !time.trim()) {
-      errs.time = 'Time is required (e.g., 6:30 PM - 8:30 PM)';
+    if (!isAllDay && !startTime) {
+      errs.time = 'Please select a start time (or check All-day event)';
+    } else if (!isAllDay && startTime && endTime && endTime < startTime) {
+      errs.time = 'End time cannot be earlier than start time';
     }
 
     if (!location.trim()) {
@@ -68,10 +73,14 @@ export const SubmitEventModal: React.FC<SubmitEventModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const formattedTime = isAllDay ? 'All Day' : buildFormattedTimeString(startTime, endTime);
       const created = await onSubmit({
         title,
         date,
-        time: isAllDay ? 'All Day' : time.trim(),
+        time: formattedTime,
+        startTime: isAllDay ? undefined : startTime,
+        endTime: isAllDay ? undefined : endTime,
+        isAllDay,
         location,
         description,
         contactEmail: contactEmail.trim() || undefined,
@@ -89,7 +98,8 @@ export const SubmitEventModal: React.FC<SubmitEventModalProps> = ({
   const handleResetAndSubmitAnother = () => {
     setTitle('');
     setDate('');
-    setTime('');
+    setStartTime('');
+    setEndTime('');
     setIsAllDay(false);
     setLocation('');
     setDescription('');
@@ -198,59 +208,42 @@ export const SubmitEventModal: React.FC<SubmitEventModalProps> = ({
                 {errors.title && <p className="text-rose-600 text-xs mt-1">{errors.title}</p>}
               </div>
 
-              {/* Date & Time Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Date <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className={`w-full px-3.5 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors ${
-                      errors.date ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300'
-                    }`}
-                  />
-                  {errors.date && <p className="text-rose-600 text-xs mt-1">{errors.date}</p>}
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-stone-700">
-                      Time {!isAllDay && <span className="text-rose-500">*</span>}
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-stone-600 hover:text-stone-900 select-none">
-                      <input
-                        type="checkbox"
-                        checked={isAllDay}
-                        onChange={(e) => {
-                          setIsAllDay(e.target.checked);
-                          if (e.target.checked) {
-                            setTime('All Day');
-                            if (errors.time) setErrors(prev => ({ ...prev, time: '' }));
-                          } else {
-                            setTime('');
-                          }
-                        }}
-                        className="rounded border-stone-300 text-stone-900 focus:ring-stone-900 w-3.5 h-3.5"
-                      />
-                      All day
-                    </label>
-                  </div>
-                  <input
-                    type="text"
-                    value={time}
-                    disabled={isAllDay}
-                    onChange={(e) => setTime(e.target.value)}
-                    placeholder="6:30 PM – 8:30 PM"
-                    className={`w-full px-3.5 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors ${
-                      isAllDay ? 'bg-stone-100 text-stone-400 cursor-not-allowed border-stone-200' : errors.time ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300 bg-white'
-                    }`}
-                  />
-                  {errors.time && <p className="text-rose-600 text-xs mt-1">{errors.time}</p>}
-                </div>
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  Date <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={`w-full px-3.5 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-stone-900/10 focus:border-stone-900 transition-colors ${
+                    errors.date ? 'border-rose-400 bg-rose-50/20' : 'border-stone-300'
+                  }`}
+                />
+                {errors.date && <p className="text-rose-600 text-xs mt-1">{errors.date}</p>}
               </div>
+
+              {/* Structured Time Picker */}
+              <TimeInputPicker
+                startTime={startTime}
+                endTime={endTime}
+                isAllDay={isAllDay}
+                onStartTimeChange={(val) => {
+                  setStartTime(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                onEndTimeChange={(val) => {
+                  setEndTime(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                onIsAllDayChange={(val) => {
+                  setIsAllDay(val);
+                  if (errors.time) setErrors((prev) => ({ ...prev, time: '' }));
+                }}
+                error={errors.time}
+                required={true}
+              />
 
               {/* Location */}
               <div>

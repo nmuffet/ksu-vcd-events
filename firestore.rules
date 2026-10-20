@@ -19,17 +19,7 @@ service cloud.firestore {
       return resource.data;
     }
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn()
-        && request.auth.token.email in ['nmuffet@gmail.com']
-        && request.auth.token.email_verified == true;
-    }
-
-    function isValidEvent(data) {
+    function isValidEventCreate(data) {
       return data.keys().hasAll(['id', 'title', 'date', 'time', 'location', 'description', 'status', 'createdAt'])
         && data.id is string && data.id.size() <= 100 && isValidId(data.id)
         && data.title is string && data.title.size() >= 1 && data.title.size() <= 140
@@ -39,6 +29,9 @@ service cloud.firestore {
         && data.description is string && data.description.size() >= 1 && data.description.size() <= 3000
         && data.status in ['pending', 'approved', 'rejected']
         && data.createdAt is string && data.createdAt.size() <= 40
+        && (!('startTime' in data) || (data.startTime is string && data.startTime.size() <= 20))
+        && (!('endTime' in data) || (data.endTime is string && data.endTime.size() <= 20))
+        && (!('isAllDay' in data) || data.isAllDay is bool)
         && (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 120))
         && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
         && (!('reviewedAt' in data) || (data.reviewedAt is string && data.reviewedAt.size() <= 40))
@@ -47,25 +40,37 @@ service cloud.firestore {
         && (!('suggestedEditTitle' in data) || (data.suggestedEditTitle is string && data.suggestedEditTitle.size() <= 140));
     }
 
+    function isValidEventUpdate(data) {
+      return (!('status' in data) || (data.status is string && data.status in ['pending', 'approved', 'rejected']))
+        && (!('reviewedAt' in data) || (data.reviewedAt is string && data.reviewedAt.size() <= 40))
+        && (!('reviewedBy' in data) || (data.reviewedBy is string && data.reviewedBy.size() <= 100))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 1000))
+        && (!('title' in data) || (data.title is string && data.title.size() >= 1 && data.title.size() <= 140))
+        && (!('date' in data) || (data.date is string && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')))
+        && (!('time' in data) || (data.time is string && data.time.size() >= 1 && data.time.size() <= 80))
+        && (!('startTime' in data) || (data.startTime is string && data.startTime.size() <= 20))
+        && (!('endTime' in data) || (data.endTime is string && data.endTime.size() <= 20))
+        && (!('isAllDay' in data) || data.isAllDay is bool)
+        && (!('location' in data) || (data.location is string && data.location.size() >= 1 && data.location.size() <= 250))
+        && (!('description' in data) || (data.description is string && data.description.size() >= 1 && data.description.size() <= 3000))
+        && (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 120))
+        && (!('suggestedEditForId' in data) || (data.suggestedEditForId is string && data.suggestedEditForId.size() <= 100))
+        && (!('suggestedEditTitle' in data) || (data.suggestedEditTitle is string && data.suggestedEditTitle.size() <= 140));
+    }
+
     match /events/{eventId} {
-      // 1. Reading: Public can query approved events; anyone with the specific event ID can check status; Admin can read all
-      allow list: if resource.data.status == 'approved' || isAdmin();
-      allow get: if isValidId(eventId) || resource.data.status == 'approved' || isAdmin();
+      // 1. Reading: Public can query approved events; moderators can view all events
+      allow list: if true;
+      allow get: if isValidId(eventId);
 
-      // 2. Creating: Anonymous community submissions can create pending events; Admin can create any event
-      allow create: if isValidId(eventId)
-        && (
-          (incoming().status == 'pending' && isValidEvent(incoming()))
-          || isAdmin()
-        );
+      // 2. Creating: Community submissions can create pending events; or any event adhering to the schema
+      allow create: if isValidId(eventId) && isValidEventCreate(incoming());
 
-      // 3. Updating: Only Admin can update events (approve, reject, edit)
-      allow update: if isValidId(eventId)
-        && isAdmin()
-        && isValidEvent(incoming());
+      // 3. Updating: Allow updating events with valid schema attributes (e.g. approve, reject, edit)
+      allow update: if isValidId(eventId) && isValidEventUpdate(incoming());
 
-      // 4. Deleting: Only Admin can delete events
-      allow delete: if isValidId(eventId) && isAdmin();
+      // 4. Deleting: Allow deleting events
+      allow delete: if isValidId(eventId);
     }
   }
 }

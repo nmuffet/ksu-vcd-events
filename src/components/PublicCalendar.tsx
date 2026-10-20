@@ -66,21 +66,42 @@ export const PublicCalendar: React.FC<PublicCalendarProps> = ({
           </div>
         )}
 
-        {/* Vertical List of Approved Events */}
-        {events.length > 0 && (
-          <div className="space-y-4">
-            {events.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                isAdmin={isAdmin}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onSuggestEdit={onSuggestEdit}
-              />
-            ))}
-          </div>
-        )}
+        {/* Grouped Events */}
+        {events.length > 0 && (() => {
+          const grouped = events.reduce((acc, event) => {
+            const monthKey = event.date.substring(0, 7);
+            console.log('Event Date:', event.date, 'MonthKey:', monthKey);
+            if (!acc[monthKey]) acc[monthKey] = [];
+            acc[monthKey].push(event);
+            return acc;
+          }, {} as Record<string, CommunityEvent[]>);
+          console.log('Grouped Events:', grouped);
+
+          return Object.entries(grouped).map(([monthKey, monthEvents]) => {
+            const [year, month] = monthKey.split('-').map(Number);
+            const date = new Date(year, month - 1, 1);
+            const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            return (
+              <div key={monthKey} className="mb-8">
+                <div className="sticky top-[64px] z-30 bg-stone-50 py-3 font-bold text-lg text-stone-900 border-b border-stone-200">
+                  {monthName}
+                </div>
+                <div className="space-y-4 mt-4">
+                  {monthEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      isAdmin={isAdmin}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onSuggestEdit={onSuggestEdit}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          });
+        })()}
       </div>
     </section>
   );

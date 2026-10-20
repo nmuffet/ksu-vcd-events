@@ -44,18 +44,17 @@ export const EventCard: React.FC<EventCardProps> = ({
           : 'border-stone-200/90 hover:border-stone-300'
       }`}
     >
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
+      <div className="flex flex-row items-start gap-3.5 sm:gap-6">
         {/* Date block */}
-        <div className="shrink-0 flex sm:flex-col items-center justify-center bg-stone-100 rounded-lg py-2.5 px-3.5 sm:w-20 text-center border border-stone-200/60">
-          <span className="text-[11px] font-bold tracking-wider text-stone-500 uppercase">
-            {month}
-          </span>
-          <span className="text-2xl sm:text-3xl font-extrabold text-stone-900 font-mono tabular-nums leading-none my-0.5 ml-2 sm:ml-0">
-            {day}
-          </span>
-          <span className="text-[11px] font-medium text-stone-600 ml-2 sm:ml-0">
-            {weekday}
-          </span>
+        <div className="shrink-0 flex flex-col items-center justify-center bg-stone-100 rounded-lg py-2 px-2.5 w-14 sm:w-20 sm:py-2.5 sm:px-3.5 text-center border border-stone-200/60 self-start">
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-2xl sm:text-3xl font-extrabold text-stone-900 font-mono tabular-nums leading-none my-0.5">
+              {day}
+            </span>
+            <span className="text-[10px] sm:text-[11px] font-medium text-stone-500 sm:text-stone-600 uppercase tracking-wide">
+              {weekday}
+            </span>
+          </div>
         </div>
 
         {/* Event Content */}
@@ -85,10 +84,10 @@ export const EventCard: React.FC<EventCardProps> = ({
             </div>
           </div>
 
-          {/* Collapsed state prompt */}
+          {/* Collapsed state prompt (truncated description) */}
           {!isOpen && (
-            <p className="text-stone-400 text-xs mt-1">
-              Click to view details and options...
+            <p className="text-stone-400 text-xs mt-1 truncate">
+              {event.description}
             </p>
           )}
 
