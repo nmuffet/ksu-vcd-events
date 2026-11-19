@@ -1,0 +1,31 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+
+# Sensitive environment variables and secrets (Never commit to GitHub)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Private Cloud / Firebase configuration (Never commit to GitHub)
+firebase-applet-config.json
+!firebase-applet-config.example.json
+
+# Local keys and credentials
+*.pem
+*.key
+credentials.json
+service-account*.json
+data/brevo.json
+data/admin.json
+data/subscribers.json
+
+# AI Studio temporary chat media attachments
+public/assets/aistudio/

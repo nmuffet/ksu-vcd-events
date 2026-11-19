@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ksu-blue: #003976;
+  --color-ksu-blue-hover: #002b59;
+  --color-ksu-blue-light: #e6eef7;
+  --text-sm: 16px;
+  --text-sm--line-height: 24px;
+  --tracking-tight: 0;
+}
+
+/* Override tracking-tight to 0 */
+@utility tracking-tight {
+  letter-spacing: 0;
+}
+
+@layer base {
+  body {
+    font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
